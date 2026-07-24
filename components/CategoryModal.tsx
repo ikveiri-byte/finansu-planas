@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, X, CircleAlert } from "lucide-react";
 import type { ExpenseCategory, Transaction } from "@/lib/types";
 import { formatEur, formatShortDate } from "@/lib/format";
 import { addExpense, deleteTransaction, restoreTransaction } from "@/lib/db";
 import { useUndoRedo } from "@/lib/undoRedo";
+import CategoryIcon from "./CategoryIcon";
 
 type Props = {
   category: ExpenseCategory;
   transactions: Transaction[];
-  accent: string;
-  light: string;
   year: number;
   month: number;
   onClose: () => void;
   onChanged: () => void;
 };
 
-export default function CategoryModal({ category, transactions, accent, light, year, month, onClose, onChanged }: Props) {
+export default function CategoryModal({ category, transactions, year, month, onClose, onChanged }: Props) {
   const { pushAction } = useUndoRedo();
   const [newName, setNewName] = useState("");
   const [newAmt, setNewAmt] = useState("");
@@ -70,24 +70,50 @@ export default function CategoryModal({ category, transactions, accent, light, y
     onChanged();
   }
 
-  const inputStyle = { border: `1.5px solid ${light}`, borderRadius: 10, padding: "9px 12px", fontSize: 14, outline: "none" } as const;
+  const inputStyle = {
+    border: "1.5px solid var(--line)",
+    borderRadius: "var(--radius-control)",
+    padding: "10px 12px",
+    fontSize: 14,
+    outline: "none",
+    minHeight: 48,
+    color: "var(--text)",
+    background: "var(--surface-strong)",
+  } as const;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(0,0,0,0.45)" }} onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{ background: "rgba(5, 22, 60, 0.55)" }}
+      onClick={onClose}
+    >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-[500px] overflow-y-auto"
-        style={{ borderRadius: "20px 20px 0 0", padding: "20px 20px 36px", maxHeight: "85vh" }}
+        className="w-full max-w-[500px] overflow-y-auto bg-surface-strong"
+        style={{
+          borderRadius: "var(--radius-panel) var(--radius-panel) 0 0",
+          padding: "20px 20px calc(28px + env(safe-area-inset-bottom))",
+          maxHeight: "88vh",
+        }}
       >
-        <div className="w-9 h-1 bg-[#e5e7eb] rounded-full mx-auto mb-3.5" />
-        <div className="flex justify-between items-center mb-3.5">
-          <span className="text-[17px] font-bold text-[#111]">{category}</span>
+        <div className="w-9 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--line)" }} />
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <span
+              className="flex items-center justify-center flex-shrink-0 rounded-full"
+              style={{ width: 34, height: 34, background: "var(--line-soft)", color: "var(--blue-700)" }}
+            >
+              <CategoryIcon category={category} size={18} />
+            </span>
+            <span className="text-[18px] font-bold" style={{ color: "var(--text)" }}>{category}</span>
+          </div>
           <button
             onClick={onClose}
             aria-label="Uždaryti"
-            className="w-[30px] h-[30px] rounded-full bg-[#f3f4f6] flex items-center justify-center text-sm"
+            className="rounded-full flex items-center justify-center app-focusable"
+            style={{ width: 34, height: 34, background: "var(--line-soft)", color: "var(--navy-900)" }}
           >
-            ✕
+            <X size={16} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
@@ -99,6 +125,7 @@ export default function CategoryModal({ category, transactions, accent, light, y
             onKeyDown={(e) => e.key === "Enter" && newAmt && handleAdd()}
             className="flex-1 min-w-0"
             style={inputStyle}
+            aria-label="Naujo įrašo pavadinimas"
           />
           <input
             placeholder="€"
@@ -106,46 +133,58 @@ export default function CategoryModal({ category, transactions, accent, light, y
             value={newAmt}
             onChange={(e) => setNewAmt(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && newName.trim() && handleAdd()}
-            className="w-[72px] text-right"
+            className="w-[76px] text-right app-numeric"
             style={inputStyle}
+            aria-label="Suma"
           />
           <button
             onClick={handleAdd}
             disabled={saving}
-            className="text-white rounded-xl px-3.5 text-lg disabled:opacity-50"
-            style={{ background: accent }}
+            aria-label="Pridėti įrašą"
+            className="text-white rounded-control flex items-center justify-center disabled:opacity-50 app-focusable flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, var(--blue-700), var(--blue-500))", width: 48, height: 48 }}
           >
-            +
+            <Plus size={20} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </div>
 
         {error && (
-          <p className="text-sm mb-3" style={{ color: "#dc2626" }}>
+          <p className="flex items-start gap-1.5 text-sm mb-3 rounded-control px-3 py-2.5" style={{ color: "var(--danger)", background: "var(--danger-soft)" }}>
+            <CircleAlert size={16} strokeWidth={1.8} className="flex-shrink-0 mt-0.5" aria-hidden="true" />
             {error}
           </p>
         )}
 
         <div className="flex justify-between items-baseline mb-3">
-          <span className="text-sm text-muted">Iš viso</span>
-          <span className="text-base font-bold" style={{ color: accent }}>{formatEur(total)}</span>
+          <span className="text-sm font-medium" style={{ color: "var(--muted)" }}>Iš viso</span>
+          <span className="app-numeric text-base font-bold" style={{ color: "var(--blue-700)" }}>{formatEur(total)}</span>
         </div>
 
-        <ul>
+        <ul className="flex flex-col gap-2">
           {transactions.map((t) => (
-            <li key={t.id} className="flex items-center justify-between py-2 border-t border-[#f9fafb] first:border-0">
-              <div>
-                <p className="text-sm text-[#374151]">{t.description}</p>
-                <p className="text-xs text-muted">{formatShortDate(t.txn_date)}</p>
+            <li
+              key={t.id}
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-control"
+              style={{ background: "var(--line-soft)" }}
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{t.description}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-[#374151]">{formatEur(t.amount)}</span>
-                <button onClick={() => handleDelete(t)} aria-label="Ištrinti" className="text-[#d1d5db] text-base">
-                  ✕
+              <div className="flex items-center gap-2.5 flex-shrink-0">
+                <span className="text-xs" style={{ color: "var(--muted)" }}>{formatShortDate(t.txn_date)}</span>
+                <span className="app-numeric text-sm font-bold" style={{ color: "var(--navy-800)" }}>{formatEur(t.amount)}</span>
+                <button
+                  onClick={() => handleDelete(t)}
+                  aria-label={`Ištrinti ${t.description}`}
+                  className="rounded-full flex items-center justify-center app-focusable"
+                  style={{ width: 26, height: 26, background: "var(--surface-strong)", color: "var(--muted)" }}
+                >
+                  <X size={13} strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
             </li>
           ))}
-          {transactions.length === 0 && <p className="text-muted text-sm py-4">Šią kategoriją dar tuščia.</p>}
+          {transactions.length === 0 && <p className="text-sm py-4" style={{ color: "var(--muted)" }}>Šią kategoriją dar tuščia.</p>}
         </ul>
       </div>
     </div>

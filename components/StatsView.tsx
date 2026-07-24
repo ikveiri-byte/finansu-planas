@@ -10,11 +10,12 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { TrendingUp, CreditCard, PiggyBank, Download } from "lucide-react";
 import { fetchTransactionsInRange, fetchSavingsGoalsInRange, fetchAllTransactions } from "@/lib/db";
 import { formatEur } from "@/lib/format";
 import { MONTH_COLORS } from "@/lib/monthColors";
 import { exportTransactionsToCsv } from "@/lib/export";
-import { useMonth } from "@/lib/monthContext";
+import CardWaves from "./CardWaves";
 
 type Period = "month" | "3m" | "6m" | "1y" | "custom";
 
@@ -26,8 +27,6 @@ function monthsBack(n: number) {
 }
 
 export default function StatsView() {
-  const { palette } = useMonth();
-  const { accent, dark, light } = palette;
   const [period, setPeriod] = useState<Period>("3m");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -120,6 +119,8 @@ export default function StatsView() {
 
   return (
     <div>
+      <h1 className="text-[26px] font-bold mb-3.5" style={{ color: "var(--text)" }}>Statistika</h1>
+
       <div className="flex gap-1.5 mb-3.5 overflow-x-auto no-scrollbar pb-0.5">
         {([
           ["month", "Mėnuo"],
@@ -131,8 +132,14 @@ export default function StatsView() {
           <button
             key={val}
             onClick={() => setPeriod(val)}
-            className="flex-shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium"
-            style={{ background: period === val ? accent : "#fff", color: period === val ? "#fff" : "#374151" }}
+            className="flex-shrink-0 rounded-full text-[13px] font-medium app-focusable"
+            style={{
+              padding: "9px 15px",
+              minHeight: 44,
+              background: period === val ? "linear-gradient(135deg, var(--blue-700), var(--blue-500))" : "var(--surface-strong)",
+              color: period === val ? "#fff" : "var(--text-secondary)",
+              border: period === val ? "none" : "1.5px solid var(--line)",
+            }}
           >
             {label}
           </button>
@@ -141,67 +148,105 @@ export default function StatsView() {
 
       {period === "custom" && (
         <div className="flex gap-2 mb-3.5">
-          <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="flex-1 rounded-lg border border-[#e5e7eb] px-2 py-1.5 text-sm bg-white" />
-          <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="flex-1 rounded-lg border border-[#e5e7eb] px-2 py-1.5 text-sm bg-white" />
+          <div className="flex-1">
+            <label className="block text-xs mb-1" style={{ color: "var(--muted)" }}>Nuo</label>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="w-full rounded-control px-2.5 py-2 text-sm bg-surface-strong"
+              style={{ border: "1.5px solid var(--line)", minHeight: 44, color: "var(--text)" }}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs mb-1" style={{ color: "var(--muted)" }}>Iki</label>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="w-full rounded-control px-2.5 py-2 text-sm bg-surface-strong"
+              style={{ border: "1.5px solid var(--line)", minHeight: 44, color: "var(--text)" }}
+            />
+          </div>
         </div>
       )}
 
       {loading ? (
-        <p className="text-center text-muted py-10">Kraunama…</p>
+        <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2 mb-3.5">
-            <div className="rounded-2xl text-center py-3 px-2.5" style={{ background: `linear-gradient(135deg, ${accent}, ${dark})` }}>
-              <p className="text-[9px] uppercase mb-0.5" style={{ color: "rgba(255,255,255,.7)" }}>Pajamos</p>
-              <p className="text-sm font-bold text-white">{Math.round(totals.income)}€</p>
+            <div className="app-hero relative overflow-hidden rounded-card text-center" style={{ padding: "14px 8px" }}>
+              <CardWaves opacity={0.14} />
+              <div className="relative z-10">
+                <TrendingUp size={18} strokeWidth={1.8} className="mx-auto mb-1" aria-hidden="true" style={{ color: "rgba(255,255,255,.85)" }} />
+                <p className="text-[9px] uppercase mb-0.5" style={{ color: "rgba(255,255,255,.7)" }}>Pajamos</p>
+                <p className="app-numeric text-sm font-bold text-white">{formatEur(totals.income)}</p>
+              </div>
             </div>
-            <div className="rounded-2xl text-center py-3 px-2.5 bg-white">
-              <p className="text-[9px] uppercase mb-0.5 text-muted">Išlaidos</p>
-              <p className="text-sm font-bold" style={{ color: "#dc2626" }}>{Math.round(totals.expenses)}€</p>
+            <div className="app-surface rounded-card text-center" style={{ padding: "14px 8px" }}>
+              <CreditCard size={18} strokeWidth={1.8} className="mx-auto mb-1" aria-hidden="true" style={{ color: "var(--muted)" }} />
+              <p className="text-[9px] uppercase mb-0.5" style={{ color: "var(--muted)" }}>Išlaidos</p>
+              <p className="app-numeric text-sm font-bold" style={{ color: "var(--danger)" }}>{formatEur(totals.expenses)}</p>
             </div>
-            <div className="rounded-2xl text-center py-3 px-2.5" style={{ background: light }}>
-              <p className="text-[9px] uppercase mb-0.5" style={{ color: dark, opacity: 0.7 }}>Sutaupyta</p>
-              <p className="text-sm font-bold" style={{ color: totals.saved < 0 ? "#dc2626" : dark }}>{Math.round(totals.saved)}€</p>
+            <div className="rounded-card text-center" style={{ padding: "14px 8px", background: "var(--line-soft)" }}>
+              <PiggyBank size={18} strokeWidth={1.8} className="mx-auto mb-1" aria-hidden="true" style={{ color: "var(--navy-800)", opacity: 0.8 }} />
+              <p className="text-[9px] uppercase mb-0.5" style={{ color: "var(--navy-800)", opacity: 0.7 }}>Sutaupyta</p>
+              <p className="app-numeric text-sm font-bold" style={{ color: totals.saved < 0 ? "var(--danger)" : "var(--navy-800)" }}>{formatEur(totals.saved)}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl mb-3.5" style={{ padding: "14px 4px 6px" }}>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={rows} barGap={3} margin={{ top: 0, right: 6, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="2 4" stroke="#f3f4f6" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v)}`} />
-                <Tooltip formatter={(v: number) => formatEur(v)} contentStyle={{ fontSize: 11, borderRadius: 10, border: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }} />
-                <Bar dataKey="income" name="Pajamos" fill={accent} radius={[4, 4, 0, 0]} opacity={0.85} />
-                <Bar dataKey="expenses" name="Išlaidos" fill="#fca5a5" radius={[4, 4, 0, 0]} />
+          <div className="app-surface rounded-card mb-3.5" style={{ padding: "16px 4px 8px" }}>
+            <div className="flex items-center justify-between px-3 mb-2">
+              <p className="text-sm font-bold" style={{ color: "var(--text)" }}>Pajamos ir išlaidos</p>
+              <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-secondary)" }}>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block rounded-sm" style={{ width: 10, height: 10, background: "var(--blue-500)" }} aria-hidden="true" />
+                  Pajamos
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block rounded-sm" style={{ width: 10, height: 10, background: "#fde3e7" }} aria-hidden="true" />
+                  Išlaidos
+                </span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={rows} barGap={3} margin={{ top: 8, right: 6, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 4" stroke="var(--line-soft)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 9, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: "var(--muted)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${Math.round(v)}`} />
+                <Tooltip formatter={(v: number) => formatEur(v)} contentStyle={{ fontSize: 11, borderRadius: 10, border: "none", boxShadow: "var(--shadow-card)" }} />
+                <Bar dataKey="income" name="Pajamos" fill="var(--blue-500)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name="Išlaidos" fill="#fde3e7" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="bg-white rounded-2xl overflow-hidden mb-3.5">
-            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] px-3.5 py-2.5" style={{ background: light }}>
+          <div className="app-surface rounded-card overflow-hidden mb-3.5">
+            <p className="text-sm font-bold px-3.5 pt-3.5 pb-2" style={{ color: "var(--text)" }}>Pagal mėnesius</p>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] px-3.5 py-2.5" style={{ background: "var(--line-soft)" }}>
               {["Mėnuo", "Paj.", "Išl.", "Sut."].map((h) => (
-                <div key={h} className="text-[10px] font-bold uppercase" style={{ color: dark }}>{h}</div>
+                <div key={h} className="text-[10px] font-bold uppercase" style={{ color: "var(--navy-800)" }}>{h}</div>
               ))}
             </div>
             {[...rows].reverse().map((m, i) => (
-              <div key={i} className="grid grid-cols-[1.4fr_1fr_1fr_1fr] px-3.5 py-2 border-t border-[#f9fafb]">
-                <div className="text-xs font-medium">{m.label}</div>
-                <div className="text-xs font-medium" style={{ color: "#16a34a" }}>{Math.round(m.income)}€</div>
-                <div className="text-xs font-medium" style={{ color: "#dc2626" }}>{Math.round(m.expenses)}€</div>
-                <div className="text-xs font-bold" style={{ color: m.saved < 0 ? "#dc2626" : dark }}>{Math.round(m.saved)}€</div>
+              <div key={i} className="grid grid-cols-[1.4fr_1fr_1fr_1fr] px-3.5 py-2.5 border-t" style={{ borderColor: "var(--line-soft)" }}>
+                <div className="text-xs font-medium" style={{ color: "var(--text)" }}>{m.label}</div>
+                <div className="app-numeric text-xs font-medium" style={{ color: "#0e8a4a" }}>{formatEur(m.income)}</div>
+                <div className="app-numeric text-xs font-medium" style={{ color: "var(--danger)" }}>{formatEur(m.expenses)}</div>
+                <div className="app-numeric text-xs font-bold" style={{ color: m.saved < 0 ? "var(--danger)" : "var(--navy-800)" }}>{formatEur(m.saved)}</div>
               </div>
             ))}
           </div>
 
-          <ExportAllButton accent={accent} />
+          <ExportAllButton />
         </>
       )}
     </div>
   );
 }
 
-function ExportAllButton({ accent }: { accent: string }) {
+function ExportAllButton() {
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
@@ -218,10 +263,11 @@ function ExportAllButton({ accent }: { accent: string }) {
     <button
       onClick={handleExport}
       disabled={exporting}
-      className="w-full text-sm px-3 py-2.5 rounded-xl bg-white font-medium disabled:opacity-50"
-      style={{ color: accent }}
+      className="w-full flex items-center justify-center gap-2 text-sm font-medium rounded-control app-surface disabled:opacity-50 app-focusable"
+      style={{ minHeight: 48, color: "var(--blue-700)" }}
     >
-      {exporting ? "Ruošiama…" : "⬇ Eksportuoti visus duomenis"}
+      <Download size={17} strokeWidth={1.8} aria-hidden="true" />
+      {exporting ? "Ruošiama…" : "Eksportuoti visus duomenis"}
     </button>
   );
 }

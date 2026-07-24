@@ -7,9 +7,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <MonthProvider>
       <UndoRedoProvider>
-        <div className="min-h-screen bg-paper max-w-[500px] mx-auto" style={{ fontFamily: "var(--font-dm-sans)" }}>
+        <div className="min-h-screen bg-appbg max-w-[500px] mx-auto" style={{ fontFamily: "var(--font-dm-sans)" }}>
           <TopHeader />
-          <div style={{ padding: "14px 14px 100px" }}>{children}</div>
+          <div style={{ padding: "16px 14px 110px" }}>{children}</div>
           <QuickAddFab />
         </div>
       </UndoRedoProvider>

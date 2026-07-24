@@ -7,7 +7,7 @@ import { fetchMonthDebts, fetchMonthPlannedPurchases } from "@/lib/db";
 import DebtsAndPurchases from "./DebtsAndPurchases";
 
 export default function PirkiniaiSkolosView() {
-  const { year, month, palette } = useMonth();
+  const { year, month } = useMonth();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [purchases, setPurchases] = useState<PlannedPurchase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function PirkiniaiSkolosView() {
     load(year, month);
   }, [year, month, load]);
 
-  if (loading) return <p className="text-center text-muted py-10">Kraunama…</p>;
+  if (loading) return <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>;
 
   return (
     <DebtsAndPurchases
@@ -32,8 +32,6 @@ export default function PirkiniaiSkolosView() {
       month={month}
       debts={debts}
       purchases={purchases}
-      accent={palette.accent}
-      light={palette.light}
       onChanged={() => load(year, month)}
     />
   );

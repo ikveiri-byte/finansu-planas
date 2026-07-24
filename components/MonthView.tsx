@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { CircleDollarSign, ReceiptText } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { useMonth } from "@/lib/monthContext";
 import {
@@ -12,9 +13,10 @@ import HeroStats from "./HeroStats";
 import IncomeChips from "./IncomeChips";
 import CategoryBreakdown from "./CategoryBreakdown";
 import TransactionFormModal from "./TransactionFormModal";
+import { formatEur } from "@/lib/format";
 
 export default function MonthView() {
-  const { year, month, palette, next, prev } = useMonth();
+  const { year, month, next, prev } = useMonth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [savingsGoal, setSavingsGoal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -57,9 +59,8 @@ export default function MonthView() {
   const income = transactions.filter((t) => t.type === "income");
   const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0);
   const totalIncome = income.reduce((s, t) => s + t.amount, 0);
-  const { accent, dark, light } = palette;
 
-  if (loading) return <p className="text-center text-muted py-10">Kraunama…</p>;
+  if (loading) return <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>;
 
   return (
     <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -69,33 +70,34 @@ export default function MonthView() {
         savingsGoal={savingsGoal}
         year={year}
         month={month}
-        accent={accent}
-        dark={dark}
-        light={light}
         onGoalChanged={setSavingsGoal}
       />
 
-      <IncomeChips income={income} accent={accent} dark={dark} light={light} onChanged={() => load(year, month)} />
+      <IncomeChips income={income} onChanged={() => load(year, month)} />
 
-      <div className="flex gap-3 mb-3.5">
+      <div className="flex gap-3 mb-4">
         <button
           onClick={() => setAddModal("income")}
-          className="flex-1 rounded-xl border border-[#e5e7eb] bg-white py-2 text-sm font-medium text-[#374151]"
+          className="flex-1 rounded-control app-surface app-focusable flex items-center justify-center gap-1.5"
+          style={{ minHeight: 48, fontSize: 14, fontWeight: 500, color: "var(--text)" }}
         >
-          + Pajamos
+          <CircleDollarSign size={17} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--blue-700)" }} />
+          Pajamos
         </button>
         <button
           onClick={() => setAddModal("expense")}
-          className="flex-1 rounded-xl border border-[#e5e7eb] bg-white py-2 text-sm font-medium text-[#374151]"
+          className="flex-1 rounded-control app-surface app-focusable flex items-center justify-center gap-1.5"
+          style={{ minHeight: 48, fontSize: 14, fontWeight: 500, color: "var(--text)" }}
         >
-          + Išlaidos
+          <ReceiptText size={17} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--blue-700)" }} />
+          Išlaidos
         </button>
       </div>
 
-      <div className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 pl-0.5">
-        Išlaidos — {totalExpenses.toFixed(2).replace(".", ",")} €
+      <div className="app-numeric text-[11px] font-bold uppercase tracking-wider mb-2 pl-0.5" style={{ color: "var(--muted)" }}>
+        Išlaidos — {formatEur(totalExpenses)}
       </div>
-      <CategoryBreakdown transactions={expenses} accent={accent} light={light} year={year} month={month} onChanged={() => load(year, month)} />
+      <CategoryBreakdown transactions={expenses} year={year} month={month} onChanged={() => load(year, month)} />
 
       <TransactionFormModal
         open={addModal !== null}
@@ -103,8 +105,6 @@ export default function MonthView() {
         initialType={addModal ?? undefined}
         year={year}
         month={month}
-        accent={accent}
-        light={light}
         onSaved={() => load(year, month)}
       />
     </div>

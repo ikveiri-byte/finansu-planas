@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { CalendarClock, Plus } from "lucide-react";
 import type { Transaction, ExpenseCategory } from "@/lib/types";
 import { CATEGORIES } from "@/lib/types";
-import { CAT_ICON } from "@/lib/categoryIcons";
 import { formatEur, formatShortDate } from "@/lib/format";
+import CategoryIcon from "./CategoryIcon";
 import CategoryModal from "./CategoryModal";
 
 type Props = {
   transactions: Transaction[]; // only type === 'expense'
-  accent: string;
-  light: string;
   year: number;
   month: number;
   onChanged: () => void;
 };
 
-export default function CategoryBreakdown({ transactions, accent, light, year, month, onChanged }: Props) {
+export default function CategoryBreakdown({ transactions, year, month, onChanged }: Props) {
   const [openCategory, setOpenCategory] = useState<ExpenseCategory | null>(null);
 
   const byCategory = CATEGORIES.map((cat) => {
@@ -28,65 +27,85 @@ export default function CategoryBreakdown({ transactions, accent, light, year, m
   }).filter((g) => g.items.length > 0);
 
   if (byCategory.length === 0) {
-    return <p className="text-muted text-sm text-center py-6">Šį mėnesį išlaidų dar nėra.</p>;
+    return <p className="text-sm text-center py-6" style={{ color: "var(--muted)" }}>Šį mėnesį išlaidų dar nėra.</p>;
   }
 
   return (
     <div className="flex flex-col gap-2.5">
       {byCategory.map(({ cat, items, fixedItems, varItems, total }) => (
-        <div key={cat} className="rounded-2xl bg-white overflow-hidden" style={{ boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
-          <div className="px-3.5 pt-3 pb-2.5 cursor-pointer" style={{ borderBottom: `1.5px solid ${light}` }} onClick={() => setOpenCategory(cat)}>
+        <div key={cat} className="app-surface rounded-card overflow-hidden">
+          <div
+            className="px-4 pt-3.5 pb-3 cursor-pointer border-b"
+            style={{ borderColor: "var(--line-soft)" }}
+            onClick={() => setOpenCategory(cat)}
+          >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg">{CAT_ICON[cat]}</span>
-                <span className="text-[13px] font-semibold text-[#374151]">{cat}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="flex items-center justify-center flex-shrink-0 rounded-full"
+                  style={{ width: 34, height: 34, background: "var(--line-soft)", color: "var(--blue-700)" }}
+                >
+                  <CategoryIcon category={cat} size={18} />
+                </span>
+                <span className="text-[13.5px] font-semibold truncate" style={{ color: "var(--text)" }}>
+                  {cat}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-bold text-[#111]">{formatEur(total)}</span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="app-numeric text-base font-bold" style={{ color: "var(--text)" }}>
+                  {formatEur(total)}
+                </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setOpenCategory(cat);
                   }}
-                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
-                  style={{ background: light, color: accent }}
+                  aria-label={`Pridėti į ${cat}`}
+                  className="rounded-full flex items-center justify-center flex-shrink-0 app-focusable"
+                  style={{ width: 30, height: 30, background: "var(--line-soft)", color: "var(--blue-700)" }}
                 >
-                  +
+                  <Plus size={16} strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
             </div>
           </div>
 
           {fixedItems.length > 0 && (
-            <div className="px-3 pt-1.5 pb-2 flex flex-wrap gap-1.5" style={{ background: `${light}66` }}>
+            <div className="px-3 pt-2 pb-2 flex flex-wrap gap-1.5" style={{ background: "var(--surface)" }}>
               {fixedItems.map((it) => (
                 <div
                   key={it.id}
                   onClick={() => setOpenCategory(cat)}
-                  className="bg-white rounded-full px-2.5 py-1 text-[11px] text-[#374151] flex items-center gap-1.5 cursor-pointer"
-                  style={{ border: `1px solid ${accent}44` }}
+                  className="rounded-full px-2.5 py-1 text-[11px] flex items-center gap-1.5 cursor-pointer bg-surface-strong"
+                  style={{ border: "1px solid var(--line)", color: "var(--text)" }}
                 >
-                  <span style={{ color: accent, fontSize: 8 }}>⬤</span>
-                  <span className="font-medium">{it.description}</span>
-                  <span className="text-muted">{formatEur(it.amount)}</span>
+                  <CalendarClock size={11} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--blue-600)" }} />
+                  <span className="font-medium truncate max-w-[110px]">{it.description}</span>
+                  <span className="app-numeric" style={{ color: "var(--muted)" }}>{formatEur(it.amount)}</span>
                 </div>
               ))}
             </div>
           )}
 
           {varItems.length > 0 && (
-            <div className="px-3.5 pt-1.5 pb-2">
+            <div className="px-4 pt-2 pb-2.5">
               {varItems.slice(0, 3).map((it) => (
-                <div key={it.id} className="flex justify-between text-xs text-[#6b7280] py-0.5">
-                  <span>
-                    <span className="text-[#d1d5db] mr-1">{formatShortDate(it.txn_date)}</span>
+                <div key={it.id} className="flex justify-between gap-2 text-xs py-0.5">
+                  <span className="truncate" style={{ color: "var(--text-secondary)" }}>
+                    <span className="mr-1" style={{ color: "var(--muted)" }}>{formatShortDate(it.txn_date)}</span>
                     {it.description}
                   </span>
-                  <span className="font-medium text-[#374151]">{formatEur(it.amount)}</span>
+                  <span className="app-numeric font-medium flex-shrink-0" style={{ color: "var(--text)" }}>
+                    {formatEur(it.amount)}
+                  </span>
                 </div>
               ))}
               {varItems.length > 3 && (
-                <button onClick={() => setOpenCategory(cat)} className="text-[11px] mt-0.5" style={{ color: accent }}>
+                <button
+                  onClick={() => setOpenCategory(cat)}
+                  className="text-[11px] mt-0.5 font-medium app-focusable"
+                  style={{ color: "var(--blue-700)" }}
+                >
                   +{varItems.length - 3} daugiau...
                 </button>
               )}
@@ -99,8 +118,6 @@ export default function CategoryBreakdown({ transactions, accent, light, year, m
         <CategoryModal
           category={openCategory}
           transactions={transactions.filter((t) => t.category === openCategory)}
-          accent={accent}
-          light={light}
           year={year}
           month={month}
           onClose={() => setOpenCategory(null)}
