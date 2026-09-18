@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, PauseCircle, CalendarCheck } from "lucide-react";
+import { CalendarClock, PauseCircle } from "lucide-react";
 import type { FixedExpense } from "@/lib/types";
 import { fetchFixedExpenses, updateFixedExpenseRange, stopFixedExpense } from "@/lib/db";
 import { formatEur } from "@/lib/format";
 import { MONTH_COLORS } from "@/lib/monthColors";
-import CardWaves from "./CardWaves";
 import CategoryIcon from "./CategoryIcon";
 
 const today = new Date();
@@ -28,97 +27,123 @@ export default function FixedExpensesView() {
 
   function isActive(fx: FixedExpense) {
     if (fx.end_year == null) return true;
-    return fx.end_year > today.getFullYear() || (fx.end_year === today.getFullYear() && (fx.end_month ?? 12) >= today.getMonth() + 1);
+    return (
+      fx.end_year > today.getFullYear() ||
+      (fx.end_year === today.getFullYear() && (fx.end_month ?? 12) >= today.getMonth() + 1)
+    );
   }
 
-  if (loading) return <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>;
+  if (loading) {
+    return <p className="py-10 text-center text-sm text-ink-3">Kraunama…</p>;
+  }
 
   if (items.length === 0) {
     return (
-      <div className="app-hero relative overflow-hidden rounded-panel flex flex-col items-center justify-center text-center" style={{ minHeight: 420, padding: 32 }}>
-        <CardWaves opacity={0.16} />
-        <div className="relative z-10 flex flex-col items-center">
-          <span
-            className="flex items-center justify-center rounded-card mb-5"
-            style={{ width: 72, height: 72, background: "rgba(255,255,255,0.12)" }}
-          >
-            <CalendarCheck size={32} strokeWidth={1.6} color="#fff" aria-hidden="true" />
-          </span>
-          <p className="text-[15px]" style={{ color: "rgba(255,255,255,.9)", maxWidth: 260 }}>
-            Fiksuotų išlaidų dar nėra. Pridėk jas pažymėdama varnelę pridedant išlaidą.
-          </p>
-        </div>
+      <div className="app-sunken rounded-panel px-6 py-12 text-center">
+        <p className="mx-auto max-w-[320px] text-[14px] leading-relaxed text-ink-2">
+          Fiksuotų išlaidų dar nėra. Pridėk jas pažymėdama varnelę, kai įrašai išlaidą.
+        </p>
       </div>
     );
   }
 
+  const activeTotal = items
+    .filter(isActive)
+    .reduce((s, fx) => s + fx.amount, 0);
+
   return (
-    <div className="flex flex-col gap-3.5">
-      {items.map((fx) => (
-        <div key={fx.id} className="app-hero relative overflow-hidden rounded-card p-4">
-          <CardWaves opacity={0.14} />
-          <div className="relative z-10">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2.5 min-w-0">
+    <div className="flex flex-col gap-4">
+      <div className="app-accent flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-card px-5 py-[18px]">
+        <span className="text-[13px] font-bold text-accent-deep">Kas mėnesį kartojasi</span>
+        <div className="flex-1" />
+        <span className="app-num text-[28px]">{formatEur(activeTotal)}</span>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        {items.map((fx) => {
+          const active = isActive(fx);
+          return (
+            <div
+              key={fx.id}
+              className={`rounded-panel px-5 py-[18px] ${active ? "app-card" : "app-sunken"}`}
+            >
+              <div className="mb-3 flex items-start gap-3">
                 <span
-                  className="flex items-center justify-center flex-shrink-0 rounded-card"
-                  style={{ width: 44, height: 44, background: "rgba(255,255,255,0.12)" }}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[15px]"
+                  style={{ background: active ? "var(--accent-tint)" : "var(--line-soft)" }}
                 >
-                  <CategoryIcon category={fx.category} size={21} color="#ffffff" />
+                  <CategoryIcon category={fx.category} size={20} />
                 </span>
-                <div className="min-w-0">
-                  <p className="font-bold text-white truncate">{fx.description}</p>
-                  <p className="text-xs truncate" style={{ color: "rgba(255,255,255,.65)" }}>{fx.category}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold">{fx.description}</p>
+                  <p className="truncate text-[12.5px] text-ink-3">{fx.category}</p>
                 </div>
+                <span className="app-num flex-shrink-0 text-[19px]">{formatEur(fx.amount)}</span>
               </div>
-              <span className="app-numeric font-bold text-white flex-shrink-0" style={{ fontSize: 18 }}>
-                {formatEur(fx.amount)}
-              </span>
-            </div>
 
-            {editingId !== fx.id && (
-              <p className="text-xs mb-3.5" style={{ color: "rgba(255,255,255,.65)" }}>
-                Nuo {MONTH_COLORS[fx.start_month].name} {fx.start_year}
-                {fx.end_year
-                  ? ` iki ${MONTH_COLORS[fx.end_month ?? 12].name} ${fx.end_year}`
-                  : isActive(fx)
-                  ? " · tebevyksta"
-                  : ""}
-              </p>
-            )}
+              {editingId !== fx.id && (
+                <p className="mb-3.5 text-[12.5px] text-ink-3">
+                  Nuo {MONTH_COLORS[fx.start_month].name.toLowerCase()} {fx.start_year}
+                  {fx.end_year
+                    ? ` iki ${MONTH_COLORS[fx.end_month ?? 12].name.toLowerCase()} ${fx.end_year}`
+                    : active
+                    ? " · tebevyksta"
+                    : ""}
+                </p>
+              )}
 
-            {editingId === fx.id ? (
-              <RangeEditor fx={fx} onCancel={() => setEditingId(null)} onSaved={() => { setEditingId(null); load(); }} />
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setEditingId(fx.id)}
-                  className="flex items-center gap-1.5 text-sm font-medium rounded-control text-white app-focusable"
-                  style={{ padding: "10px 16px", minHeight: 44, background: "linear-gradient(135deg, var(--blue-600), var(--cyan-400))" }}
-                >
-                  <CalendarClock size={16} strokeWidth={1.8} aria-hidden="true" />
-                  Koreguoti trukmę
-                </button>
-                {isActive(fx) && (
+              {editingId === fx.id ? (
+                <RangeEditor
+                  fx={fx}
+                  onCancel={() => setEditingId(null)}
+                  onSaved={() => {
+                    setEditingId(null);
+                    load();
+                  }}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => stopFixedExpense(fx.id, today.getFullYear(), today.getMonth() + 1).then(load)}
-                    className="flex items-center gap-1.5 text-sm font-medium rounded-control text-white app-focusable"
-                    style={{ padding: "10px 16px", minHeight: 44, border: "1.5px solid rgba(255,255,255,.35)" }}
+                    type="button"
+                    onClick={() => setEditingId(fx.id)}
+                    className="app-focusable flex min-h-[44px] items-center gap-2 rounded-control bg-ink px-4 text-[13.5px] font-bold text-card"
                   >
-                    <PauseCircle size={16} strokeWidth={1.8} aria-hidden="true" />
-                    Sustabdyti nuo šio mėn.
+                    <CalendarClock size={16} strokeWidth={1.9} aria-hidden="true" />
+                    Koreguoti trukmę
                   </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
+                  {active && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        stopFixedExpense(fx.id, today.getFullYear(), today.getMonth() + 1).then(
+                          load
+                        )
+                      }
+                      className="app-focusable flex min-h-[44px] items-center gap-2 rounded-control border border-line px-4 text-[13.5px] font-bold text-ink-2"
+                    >
+                      <PauseCircle size={16} strokeWidth={1.9} aria-hidden="true" />
+                      Sustabdyti nuo šio mėn.
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function RangeEditor({ fx, onCancel, onSaved }: { fx: FixedExpense; onCancel: () => void; onSaved: () => void }) {
+function RangeEditor({
+  fx,
+  onCancel,
+  onSaved,
+}: {
+  fx: FixedExpense;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
   const [startYear, setStartYear] = useState(fx.start_year);
   const [startMonth, setStartMonth] = useState(fx.start_month);
   const [endYear, setEndYear] = useState<number | "">(fx.end_year ?? "");
@@ -134,34 +159,42 @@ function RangeEditor({ fx, onCancel, onSaved }: { fx: FixedExpense; onCancel: ()
     onSaved();
   }
 
-  const inputStyle = {
-    border: "1.5px solid rgba(255,255,255,.25)",
-    borderRadius: "var(--radius-control)",
-    padding: "10px 12px",
-    background: "rgba(255,255,255,.08)",
-    color: "#fff",
-    minHeight: 44,
-  } as const;
+  const field =
+    "app-focusable min-h-[44px] w-full rounded-[13px] border border-line bg-sunken-2 px-3 text-[14px] text-ink";
 
   return (
-    <div className="space-y-3 text-sm relative z-10">
+    <div className="flex flex-col gap-3">
       <div>
-        <p className="text-xs mb-1" style={{ color: "rgba(255,255,255,.65)" }}>Nuo</p>
+        <p className="mb-1.5 text-[12.5px] font-bold text-ink-2">Nuo</p>
         <div className="flex gap-2">
-          <input type="number" value={startMonth} onChange={(e) => setStartMonth(Number(e.target.value))} className="w-full" style={inputStyle} min={1} max={12} aria-label="Pradžios mėnuo" />
-          <input type="number" value={startYear} onChange={(e) => setStartYear(Number(e.target.value))} className="w-full" style={inputStyle} aria-label="Pradžios metai" />
+          <input
+            type="number"
+            value={startMonth}
+            onChange={(e) => setStartMonth(Number(e.target.value))}
+            className={field}
+            min={1}
+            max={12}
+            aria-label="Pradžios mėnuo"
+          />
+          <input
+            type="number"
+            value={startYear}
+            onChange={(e) => setStartYear(Number(e.target.value))}
+            className={field}
+            aria-label="Pradžios metai"
+          />
         </div>
       </div>
+
       <div>
-        <p className="text-xs mb-1" style={{ color: "rgba(255,255,255,.65)" }}>Iki</p>
+        <p className="mb-1.5 text-[12.5px] font-bold text-ink-2">Iki</p>
         <div className="flex gap-2">
           <input
             type="number"
             value={endMonth}
             onChange={(e) => setEndMonth(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder="—"
-            className="w-full placeholder:text-white/40"
-            style={inputStyle}
+            className={field}
             min={1}
             max={12}
             aria-label="Pabaigos mėnuo"
@@ -171,24 +204,24 @@ function RangeEditor({ fx, onCancel, onSaved }: { fx: FixedExpense; onCancel: ()
             value={endYear}
             onChange={(e) => setEndYear(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder="be pabaigos"
-            className="w-full placeholder:text-white/40"
-            style={inputStyle}
+            className={field}
             aria-label="Pabaigos metai"
           />
         </div>
       </div>
+
       <div className="flex gap-2 pt-1">
         <button
+          type="button"
           onClick={onCancel}
-          className="flex-1 rounded-control text-white app-focusable"
-          style={{ border: "1.5px solid rgba(255,255,255,.35)", minHeight: 44 }}
+          className="app-focusable min-h-[44px] flex-1 rounded-control border border-line text-[14px] font-bold text-ink-2"
         >
           Atšaukti
         </button>
         <button
+          type="button"
           onClick={save}
-          className="flex-1 rounded-control text-white font-semibold app-focusable"
-          style={{ background: "linear-gradient(135deg, var(--blue-600), var(--cyan-400))", minHeight: 44 }}
+          className="app-focusable min-h-[44px] flex-1 rounded-control bg-ink text-[14px] font-bold text-card"
         >
           Išsaugoti
         </button>
