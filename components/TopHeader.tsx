@@ -1,159 +1,141 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Undo2, Redo2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Redo2, Undo2 } from "lucide-react";
 import { useMonth } from "@/lib/monthContext";
 import { useUndoRedo } from "@/lib/undoRedo";
-import { monthLabel } from "@/lib/monthColors";
-
-const TABS = [
-  { href: "/menuo", label: "Mėnuo" },
-  { href: "/statistika", label: "Statistika" },
-  { href: "/pirkiniai-skolos", label: "Pirkiniai · Skolos" },
-  { href: "/fiksuotos", label: "Fiksuotos" },
-];
+import { MONTH_COLORS, MONTH_LIST } from "@/lib/monthColors";
+import TransactionFormModal from "./TransactionFormModal";
 
 export default function TopHeader() {
   const pathname = usePathname();
-  const { year, month, next, prev } = useMonth();
+  const { year, month, next, prev, goTo } = useMonth();
   const { undo, redo, canUndo, canRedo, lastLabel } = useUndoRedo();
+  const [addOpen, setAddOpen] = useState(false);
 
-  const showMonthRow = pathname?.startsWith("/menuo") || pathname?.startsWith("/pirkiniai-skolos");
-  const showUndoRow = (pathname?.startsWith("/statistika") || pathname?.startsWith("/fiksuotos")) && (canUndo || canRedo);
+  const showMonth =
+    pathname?.startsWith("/menuo") || pathname?.startsWith("/pirkiniai-skolos");
+
+  const iconBtn =
+    "app-focusable flex h-11 w-11 items-center justify-center rounded-control border border-line bg-card text-ink-2 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <div className="sticky top-0 z-40 bg-surface-strong/95 backdrop-blur" style={{ boxShadow: "0 1px 0 var(--line-soft)" }}>
-      <div className="flex gap-1 overflow-x-auto no-scrollbar" style={{ padding: "10px 10px 8px" }}>
-        {TABS.map((tab) => {
-          const active = pathname?.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className="flex-shrink-0 text-center whitespace-nowrap rounded-full transition-colors app-focusable"
-              style={{
-                padding: "9px 14px",
-                fontSize: 12.5,
-                fontWeight: active ? 700 : 500,
-                color: active ? "#ffffff" : "var(--text-secondary)",
-                background: active ? "linear-gradient(135deg, var(--blue-700), var(--blue-500))" : "transparent",
-                minWidth: 44,
-                minHeight: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
+    <div className="border-b border-line bg-card lg:sticky lg:top-0 lg:z-40">
+      <div className="mx-auto w-full max-w-app px-3.5 py-3 lg:px-10 lg:py-5">
+        <div className="flex flex-col gap-3.5">
+          {/* eilutė: mėnuo + veiksmai */}
+          <div className="flex items-center gap-2 lg:gap-4">
+            {showMonth && (
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Ankstesnis mėnuo"
+                className={`${iconBtn} lg:hidden`}
+              >
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
+              </button>
+            )}
 
-      {showMonthRow && (
-        <div className="flex items-center justify-between border-t" style={{ padding: "10px 14px", borderColor: "var(--line-soft)" }}>
-          <button
-            onClick={prev}
-            aria-label="Ankstesnis mėnuo"
-            className="rounded-full flex items-center justify-center flex-shrink-0 app-focusable"
-            style={{ background: "var(--line-soft)", width: 40, height: 40, color: "var(--navy-900)", border: "none" }}
-          >
-            <ChevronLeft size={20} strokeWidth={1.8} aria-hidden="true" />
-          </button>
-          <span className="app-numeric" style={{ fontSize: 17, fontWeight: 700, color: "var(--text)" }}>
-            {monthLabel(year, month)}
-          </span>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <h1 className="app-display flex flex-1 items-baseline justify-center gap-2 text-[20px] lg:flex-none lg:justify-start lg:text-[36px]">
+              {showMonth ? (
+                <>
+                  <span>{MONTH_COLORS[month].name}</span>
+                  <span className="font-medium text-ink-3 lg:text-[26px]">{year}</span>
+                </>
+              ) : pathname?.startsWith("/statistika") ? (
+                "Statistika"
+              ) : (
+                "Fiksuotos išlaidos"
+              )}
+            </h1>
+
+            <div className="hidden flex-1 lg:block" />
+
             <button
+              type="button"
               onClick={undo}
               disabled={!canUndo}
               aria-label={canUndo ? `Atšaukti: ${lastLabel}` : "Atšaukti (nėra ką atšaukti)"}
               title={canUndo ? `Atšaukti: ${lastLabel}` : undefined}
-              className="rounded-full flex items-center justify-center app-focusable"
-              style={{
-                background: canUndo ? "var(--line-soft)" : "transparent",
-                width: 40,
-                height: 40,
-                color: canUndo ? "var(--navy-900)" : "var(--muted)",
-                border: "none",
-                opacity: canUndo ? 1 : 0.42,
-                cursor: canUndo ? "pointer" : "not-allowed",
-              }}
+              className={iconBtn}
             >
-              <Undo2 size={19} strokeWidth={1.8} aria-hidden="true" />
+              <Undo2 size={18} strokeWidth={1.9} aria-hidden="true" />
             </button>
+
             <button
+              type="button"
               onClick={redo}
               disabled={!canRedo}
-              aria-label="Grąžinti"
-              className="rounded-full flex items-center justify-center app-focusable"
-              style={{
-                background: canRedo ? "var(--line-soft)" : "transparent",
-                width: 40,
-                height: 40,
-                color: canRedo ? "var(--navy-900)" : "var(--muted)",
-                border: "none",
-                opacity: canRedo ? 1 : 0.42,
-                cursor: canRedo ? "pointer" : "not-allowed",
-              }}
+              aria-label="Pakartoti veiksmą"
+              className={`${iconBtn} hidden lg:flex`}
             >
-              <Redo2 size={19} strokeWidth={1.8} aria-hidden="true" />
+              <Redo2 size={18} strokeWidth={1.9} aria-hidden="true" />
             </button>
+
+            {showMonth && (
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Kitas mėnuo"
+                className={`${iconBtn} lg:hidden`}
+              >
+                <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
+              </button>
+            )}
+
             <button
-              onClick={next}
-              aria-label="Kitas mėnuo"
-              className="rounded-full flex items-center justify-center flex-shrink-0 app-focusable"
-              style={{ background: "var(--line-soft)", width: 40, height: 40, color: "var(--navy-900)", border: "none" }}
+              type="button"
+              onClick={() => setAddOpen(true)}
+              className="app-focusable hidden min-h-[44px] items-center gap-2 rounded-control bg-ink px-5 text-[14.5px] font-bold text-card lg:flex"
             >
-              <ChevronRight size={20} strokeWidth={1.8} aria-hidden="true" />
+              <Plus size={17} strokeWidth={2.2} aria-hidden="true" />
+              Naujas įrašas
             </button>
           </div>
-        </div>
-      )}
 
-      {showUndoRow && (
-        <div className="flex items-center gap-2 border-t" style={{ padding: "8px 14px", borderColor: "var(--line-soft)" }}>
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            className="flex items-center gap-1.5 rounded-full app-focusable"
-            style={{
-              padding: "6px 14px",
-              minHeight: 36,
-              background: canUndo ? "var(--line-soft)" : "transparent",
-              color: canUndo ? "var(--navy-900)" : "var(--muted)",
-              fontSize: 12.5,
-              fontWeight: 600,
-              border: "none",
-              opacity: canUndo ? 1 : 0.42,
-              cursor: canUndo ? "pointer" : "not-allowed",
-            }}
-          >
-            <Undo2 size={16} strokeWidth={1.8} aria-hidden="true" />
-            {canUndo ? lastLabel : "Atšaukti"}
-          </button>
-          <button
-            onClick={redo}
-            disabled={!canRedo}
-            className="flex items-center gap-1.5 rounded-full app-focusable"
-            style={{
-              padding: "6px 14px",
-              minHeight: 36,
-              background: canRedo ? "var(--line-soft)" : "transparent",
-              color: canRedo ? "var(--navy-900)" : "var(--muted)",
-              fontSize: 12.5,
-              fontWeight: 600,
-              border: "none",
-              opacity: canRedo ? 1 : 0.42,
-              cursor: canRedo ? "pointer" : "not-allowed",
-            }}
-          >
-            <Redo2 size={16} strokeWidth={1.8} aria-hidden="true" />
-            Pakartoti
-          </button>
+          {/* metų juosta — tik plačiame ekrane */}
+          {showMonth && (
+            <div className="hidden grid-cols-12 gap-1.5 lg:grid">
+              {MONTH_LIST.map((m) => {
+                const active = m === month;
+                const future =
+                  year > new Date().getFullYear() ||
+                  (year === new Date().getFullYear() && m > new Date().getMonth() + 1);
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => goTo(year, m)}
+                    aria-current={active ? "true" : undefined}
+                    aria-label={`${MONTH_COLORS[m].name} ${year}`}
+                    className={`app-focusable min-h-[40px] rounded-[12px] text-[13px] ${
+                      active
+                        ? "bg-accent font-bold text-ink"
+                        : future
+                        ? "border border-dashed border-line-dashed font-medium text-ink-3"
+                        : "border border-line bg-card font-medium text-ink-2 hover:bg-sunken"
+                    }`}
+                  >
+                    {MONTH_COLORS[m].short}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
+
+      <TransactionFormModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        year={year}
+        month={month}
+        onSaved={() => {
+          // MonthView klausosi šito ir persikrauna
+          window.dispatchEvent(new CustomEvent("finansai:changed"));
+        }}
+      />
     </div>
   );
 }

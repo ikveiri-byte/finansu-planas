@@ -1,8 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Gabarito } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({ subsets: ["latin", "latin-ext"], variable: "--font-dm-sans", weight: ["400", "500", "600", "700"] });
+const dmSans = DM_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
+});
+
+const gabarito = Gabarito({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-gabarito",
+  weight: ["500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Finansai",
@@ -16,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#eef7ff",
+  themeColor: "#f2eee4",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -24,8 +34,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="lt" className={dmSans.variable}>
-      <body className="font-body min-h-screen">{children}</body>
+    <html lang="lt" className={`${dmSans.variable} ${gabarito.variable}`}>
+      <body className="font-body min-h-screen bg-paper text-ink">{children}</body>
     </html>
   );
 }

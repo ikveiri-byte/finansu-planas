@@ -3,43 +3,50 @@
 @tailwind utilities;
 
 :root {
-  --font-dm-sans: "DM Sans", -apple-system, sans-serif;
+  /* šriftai */
+  --font-display: var(--font-gabarito), "DM Sans", -apple-system, sans-serif;
+  --font-body: var(--font-dm-sans), -apple-system, sans-serif;
 
-  --app-bg: #eef7ff;
-  --surface: #f8fcff;
-  --surface-strong: #ffffff;
+  /* popierius ir paviršiai */
+  --paper: #f2eee4;
+  --card: #fcfaf5;
+  --sunken: #f6f2e9;
+  --sunken-2: #f8f5ee;
 
-  --navy-950: #041f5f;
-  --navy-900: #062b78;
-  --navy-800: #083b98;
+  /* linijos */
+  --line: #e3dccc;
+  --line-soft: #f0ebe0;
+  --line-dashed: #d9cfb6;
 
-  --blue-700: #075fcf;
-  --blue-600: #087be5;
-  --blue-500: #0792ee;
-  --cyan-400: #2db5f2;
+  /* tekstas */
+  --ink: #2b2520;
+  --ink-2: #6e6459;
+  --ink-3: #8b8175;
 
-  --text: #0b2d6b;
-  --text-secondary: #45658e;
-  --muted: #6683a4;
+  /* reikšmės */
+  --saved: #6b7f3a;
+  --saved-deep: #4e5f2a;
+  --danger: #a6412f;
+  --danger-soft: #fbeeea;
 
-  --line: #a9d6f7;
-  --line-soft: #d6ebfb;
-  --focus: #1689ed;
-  --danger: #d9364b;
-  --danger-soft: #fff0f2;
+  /* mėnesio spalva — perrašoma AppShell komponente */
+  --accent: #e3b44a;
+  --accent-tint: #f5e9cf;
+  --accent-deep: #6e4a10;
+  --accent-bar: #e0c173;
+  --accent-track: #efe9dc;
 
-  --shadow-card: 0 14px 36px rgba(15, 78, 145, 0.12);
-  --shadow-fab: 0 12px 28px rgba(3, 54, 135, 0.28);
-
-  --radius-panel: 32px;
-  --radius-card: 28px;
-  --radius-control: 18px;
+  /* forma */
+  --radius-card: 22px;
+  --radius-panel: 24px;
+  --radius-control: 14px;
   --radius-pill: 999px;
 }
 
-html, body {
-  background-color: var(--app-bg);
-  color: var(--text);
+html,
+body {
+  background-color: var(--paper);
+  color: var(--ink);
 }
 
 * {
@@ -56,48 +63,112 @@ html, body {
   scrollbar-width: none;
 }
 
-.app-numeric {
+/* Skaičiai: vienodo pločio skaitmenys, kad sumos nešokinėtų */
+.app-num {
+  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
-.app-surface {
-  background: rgba(248, 252, 255, 0.96);
+.app-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+.app-card {
+  background: var(--card);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
 }
 
-.app-hero {
-  color: #ffffff;
-  background:
-    radial-gradient(circle at 14% 8%, rgba(18, 134, 238, 0.32), transparent 38%),
-    linear-gradient(135deg, var(--navy-900), var(--navy-950));
+.app-sunken {
+  background: var(--sunken);
 }
 
-.app-primary {
-  color: #ffffff;
-  background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+.app-dashed {
+  background: transparent;
+  border: 1px dashed var(--line-dashed);
+  color: var(--ink-2);
 }
 
-.app-focusable:focus-visible {
-  border-color: var(--focus);
-  outline: 3px solid rgba(22, 137, 237, 0.25);
-  outline-offset: 2px;
+/* Mėnesio spalvos kortelė — plokščia, be gradiento, tamsus tekstas */
+.app-accent {
+  background: var(--accent);
+  color: var(--ink);
 }
 
+.app-accent-tint {
+  background: var(--accent-tint);
+  color: var(--ink);
+}
+
+.app-dark {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.app-focusable:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgba(22, 137, 237, 0.25);
+  outline: 3px solid rgba(110, 74, 16, 0.32);
   outline-offset: 2px;
-  border-color: var(--focus);
+  border-color: var(--accent-deep);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ——————————————————————————————————————————————
+   Laikinas tiltas: Statistika, Fiksuotos išlaidos ir modalai
+   dar naudoja senus klasių pavadinimus. Kai jie bus perdaryti,
+   šį bloką galima ištrinti.
+   —————————————————————————————————————————————— */
+.app-surface {
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+.app-hero {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.app-primary {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.app-numeric {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+:root {
+  --app-bg: var(--paper);
+  --surface: var(--card);
+  --surface-strong: var(--card);
+  --text: var(--ink);
+  --text-secondary: var(--ink-2);
+  --muted: var(--ink-3);
+  --navy-950: var(--ink);
+  --navy-900: var(--ink);
+  --navy-800: var(--ink-2);
+  --blue-700: var(--accent-deep);
+  --blue-600: var(--accent-deep);
+  --blue-500: var(--accent-deep);
+  --cyan-400: var(--accent);
+  --focus: var(--accent-deep);
+  --shadow-card: none;
+  --shadow-fab: none;
+}
+

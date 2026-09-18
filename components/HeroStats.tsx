@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil, WalletCards, Target, PiggyBank, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Pencil } from "lucide-react";
 import { formatEur } from "@/lib/format";
 import { upsertSavingsGoal } from "@/lib/db";
-import CardWaves from "./CardWaves";
 
 type Props = {
   totalIncome: number;
@@ -15,78 +14,131 @@ type Props = {
   onGoalChanged: (goal: number) => void;
 };
 
-export default function HeroStats({ totalIncome, totalExpenses, savingsGoal, year, month, onGoalChanged }: Props) {
-  const [editingGoal, setEditingGoal] = useState(false);
-  const [goalInput, setGoalInput] = useState(String(savingsGoal || ""));
+export default function HeroStats({
+  totalIncome,
+  totalExpenses,
+  savingsGoal,
+  year,
+  month,
+  onGoalChanged,
+}: Props) {
   const sutaupyta = totalIncome - totalExpenses;
-  const balansas = sutaupyta - savingsGoal;
+  const likutis = sutaupyta - savingsGoal;
+  const goalReached = savingsGoal > 0 && sutaupyta >= savingsGoal;
+  const goalProgress =
+    savingsGoal > 0 ? Math.min(100, Math.max(0, (sutaupyta / savingsGoal) * 100)) : 0;
+  const expenseShare = totalIncome > 0 ? Math.round((totalExpenses / totalIncome) * 100) : 0;
+
+  const [goalInput, setGoalInput] = useState(savingsGoal ? String(savingsGoal) : "");
+  const [saving, setSaving] = useState(false);
+
+  // Perjungus mėnesį laukelis turi parodyti to mėnesio tikslą
+  useEffect(() => {
+    setGoalInput(savingsGoal ? String(savingsGoal) : "");
+  }, [savingsGoal, year, month]);
 
   async function saveGoal() {
     const val = parseFloat(goalInput.replace(",", ".")) || 0;
+    if (val === savingsGoal) return;
+    setSaving(true);
     await upsertSavingsGoal(year, month, val);
     onGoalChanged(val);
-    setEditingGoal(false);
+    setSaving(false);
   }
 
+  const card = "rounded-card px-5 py-[18px] flex flex-col gap-1.5 min-h-[142px]";
+  const label = "text-[13px] font-bold";
+
   return (
-    <div className="grid grid-cols-2 gap-2.5 mb-4">
-      <div className="app-hero relative overflow-hidden rounded-card px-4 py-4">
-        <CardWaves className="z-0" opacity={0.16} />
-        <div className="relative z-10">
-          <div className="flex items-center gap-1.5 mb-1.5" style={{ color: "rgba(255,255,255,.75)" }}>
-            <WalletCards size={16} strokeWidth={1.8} aria-hidden="true" />
-            <p className="text-[10px] uppercase tracking-wider">Balansas</p>
-          </div>
-          <p className="app-numeric text-[26px] font-bold" style={{ color: balansas < 0 ? "#ffb4bf" : "#ffffff" }}>
-            {formatEur(balansas)}
-          </p>
+    <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
+      {/* Likutis */}
+      <div className={`${card} app-accent col-span-2 lg:col-span-1`}>
+        <div className={`${label} text-accent-deep`}>Likutis</div>
+        <div className="app-num text-[32px] leading-tight">{formatEur(likutis)}</div>
+        <div className="text-[12.5px] leading-snug text-accent-deep">
+          {savingsGoal > 0 ? "atidėjus tikslą" : "tikslas dar nenustatytas"}
         </div>
       </div>
 
-      <div className="app-surface rounded-card px-4 py-4">
-        <div className="flex items-center gap-1.5 mb-1.5" style={{ color: "var(--muted)" }}>
-          <TrendingUp size={16} strokeWidth={1.8} aria-hidden="true" />
-          <p className="text-[10px] uppercase tracking-wider">Pajamos</p>
-        </div>
-        <p className="app-numeric text-xl font-bold" style={{ color: "var(--blue-700)" }}>
-          {formatEur(totalIncome)}
-        </p>
+      {/* Pajamos */}
+      <div className={`${card} app-card`}>
+        <div className={`${label} text-ink-2`}>Pajamos</div>
+        <div className="app-num text-[25px] leading-tight">{formatEur(totalIncome)}</div>
       </div>
 
-      <button onClick={() => setEditingGoal(true)} className="text-left app-surface rounded-card px-4 py-4 app-focusable">
-        <div className="flex items-center gap-1.5 mb-1.5" style={{ color: "var(--muted)" }}>
-          <Target size={16} strokeWidth={1.8} aria-hidden="true" />
-          <p className="text-[10px] uppercase tracking-wider">Santaupų tikslas</p>
-          <Pencil size={12} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--muted)" }} />
+      {/* Išlaidos */}
+      <div className={`${card} app-card`}>
+        <div className={`${label} text-ink-2`}>Išlaidos</div>
+        <div className="app-num text-[25px] leading-tight">{formatEur(totalExpenses)}</div>
+        {totalIncome > 0 && (
+          <div className="text-[12.5px] text-ink-3">{expenseShare} % pajamų</div>
+        )}
+      </div>
+
+      {/* Sutaupyta */}
+      <div className={`${card} app-accent-tint`}>
+        <div className={`${label} text-accent-deep`}>Sutaupyta</div>
+        <div
+          className="app-num text-[25px] leading-tight"
+          style={{ color: sutaupyta < 0 ? "var(--danger)" : undefined }}
+        >
+          {formatEur(sutaupyta)}
         </div>
-        {editingGoal ? (
+        {savingsGoal > 0 && (
+          <>
+            <div
+              className="h-2 overflow-hidden rounded-full"
+              role="progressbar"
+              aria-valuenow={Math.round(goalProgress)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Santaupų tikslo pažanga"
+              style={{ background: "rgba(0,0,0,0.08)" }}
+            >
+              <div
+                className="h-2 rounded-full bg-saved"
+                style={{ width: `${goalProgress}%` }}
+              />
+            </div>
+            <div
+              className="text-[12.5px] font-bold"
+              style={{ color: goalReached ? "var(--saved-deep)" : "var(--danger)" }}
+            >
+              {goalReached
+                ? "tikslas pasiektas"
+                : `trūksta ${formatEur(savingsGoal - sutaupyta)}`}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Tikslas — įrašomas ranka */}
+      <div className={`${card} app-dashed col-span-2 lg:col-span-1`}>
+        <label
+          htmlFor="santaupu-tikslas"
+          className={`${label} flex items-center gap-1.5 text-ink-2`}
+        >
+          Tikslas
+          <Pencil size={13} strokeWidth={1.9} aria-hidden="true" />
+        </label>
+        <div className="flex items-center gap-2">
           <input
-            autoFocus
+            id="santaupu-tikslas"
             inputMode="decimal"
             value={goalInput}
+            placeholder="0"
             onChange={(e) => setGoalInput(e.target.value)}
             onBlur={saveGoal}
-            onKeyDown={(e) => e.key === "Enter" && saveGoal()}
-            aria-label="Santaupų tikslo suma"
-            className="app-numeric w-full text-xl font-bold bg-transparent outline-none"
-            style={{ color: "var(--blue-700)" }}
-            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+            className="app-num app-focusable min-h-[46px] w-full min-w-0 rounded-[13px] border border-line bg-sunken-2 px-3 text-[23px] text-ink outline-none"
           />
-        ) : (
-          <p className="app-numeric text-xl font-bold" style={{ color: "var(--blue-700)" }}>
-            {formatEur(savingsGoal)}
-          </p>
-        )}
-      </button>
-
-      <div className="rounded-card px-4 py-4" style={{ background: "var(--line-soft)" }}>
-        <div className="flex items-center gap-1.5 mb-1.5" style={{ color: "var(--navy-800)", opacity: 0.75 }}>
-          <PiggyBank size={16} strokeWidth={1.8} aria-hidden="true" />
-          <p className="text-[10px] uppercase tracking-wider">Sutaupyta</p>
+          <span className="app-num text-[20px] text-ink-3">€</span>
         </div>
-        <p className="app-numeric text-xl font-bold" style={{ color: sutaupyta < 0 ? "var(--danger)" : "var(--navy-800)" }}>
-          {formatEur(sutaupyta)}
-        </p>
+        <div className="text-[12.5px] text-ink-3">
+          {saving ? "išsaugoma…" : "įrašyk savo sumą"}
+        </div>
       </div>
     </div>
   );

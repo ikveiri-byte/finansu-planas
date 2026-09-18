@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CircleDollarSign, ReceiptText } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { useMonth } from "@/lib/monthContext";
@@ -13,7 +13,6 @@ import HeroStats from "./HeroStats";
 import IncomeChips from "./IncomeChips";
 import CategoryBreakdown from "./CategoryBreakdown";
 import TransactionFormModal from "./TransactionFormModal";
-import { formatEur } from "@/lib/format";
 
 export default function MonthView() {
   const { year, month, next, prev } = useMonth();
@@ -28,7 +27,10 @@ export default function MonthView() {
   const load = useCallback(async (y: number, m: number) => {
     setLoading(true);
     await ensureFixedExpenseInstances(y, m);
-    const [txns, goal] = await Promise.all([fetchMonthTransactions(y, m), fetchSavingsGoal(y, m)]);
+    const [txns, goal] = await Promise.all([
+      fetchMonthTransactions(y, m),
+      fetchSavingsGoal(y, m),
+    ]);
     setTransactions(txns);
     setSavingsGoal(goal?.goal_amount ?? 0);
     setLoading(false);
@@ -38,16 +40,22 @@ export default function MonthView() {
     load(year, month);
   }, [year, month, load]);
 
+  // Įrašius per antraštės mygtuką — persikrauname
+  useEffect(() => {
+    const handler = () => load(year, month);
+    window.addEventListener("finansai:changed", handler);
+    return () => window.removeEventListener("finansai:changed", handler);
+  }, [year, month, load]);
+
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   }
+
   function onTouchEnd(e: React.TouchEvent) {
     if (touchStartX.current == null || touchStartY.current == null) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    // only treat as a month-swipe if the gesture is clearly horizontal —
-    // otherwise normal vertical scrolling would accidentally flip months
     if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
       deltaX < 0 ? next() : prev();
     }
@@ -60,7 +68,11 @@ export default function MonthView() {
   const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0);
   const totalIncome = income.reduce((s, t) => s + t.amount, 0);
 
-  if (loading) return <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>;
+  if (loading) {
+    return (
+      <p className="py-10 text-center text-sm text-ink-3">Kraunama…</p>
+    );
+  }
 
   return (
     <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -73,31 +85,53 @@ export default function MonthView() {
         onGoalChanged={setSavingsGoal}
       />
 
-      <IncomeChips income={income} onChanged={() => load(year, month)} />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)] lg:items-start">
+        {/* kairė: išlaidos */}
+        <div className="order-2 lg:order-1">
+          <CategoryBreakdown
+            transactions={expenses}
+            year={year}
+            month={month}
+            onChanged={() => load(year, month)}
+          />
+        </div>
 
-      <div className="flex gap-3 mb-4">
-        <button
-          onClick={() => setAddModal("income")}
-          className="flex-1 rounded-control app-surface app-focusable flex items-center justify-center gap-1.5"
-          style={{ minHeight: 48, fontSize: 14, fontWeight: 500, color: "var(--text)" }}
-        >
-          <CircleDollarSign size={17} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--blue-700)" }} />
-          Pajamos
-        </button>
-        <button
-          onClick={() => setAddModal("expense")}
-          className="flex-1 rounded-control app-surface app-focusable flex items-center justify-center gap-1.5"
-          style={{ minHeight: 48, fontSize: 14, fontWeight: 500, color: "var(--text)" }}
-        >
-          <ReceiptText size={17} strokeWidth={1.8} aria-hidden="true" style={{ color: "var(--blue-700)" }} />
-          Išlaidos
-        </button>
-      </div>
+        {/* dešinė: pajamos ir greiti veiksmai */}
+        <div className="order-1 flex flex-col gap-4 lg:order-2">
+          <IncomeChips
+            income={income}
+            onChanged={() => load(year, month)}
+            onAdd={() => setAddModal("income")}
+          />
 
-      <div className="app-numeric text-[11px] font-bold uppercase tracking-wider mb-2 pl-0.5" style={{ color: "var(--muted)" }}>
-        Išlaidos — {formatEur(totalExpenses)}
+          <div className="grid grid-cols-2 gap-3 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setAddModal("income")}
+              className="app-focusable app-card flex min-h-[48px] items-center justify-center gap-2 rounded-control text-[14px] font-medium"
+            >
+              <CircleDollarSign size={17} strokeWidth={1.8} aria-hidden="true" />
+              Pajamos
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddModal("expense")}
+              className="app-focusable app-card flex min-h-[48px] items-center justify-center gap-2 rounded-control text-[14px] font-medium"
+            >
+              <ReceiptText size={17} strokeWidth={1.8} aria-hidden="true" />
+              Išlaidos
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setAddModal("expense")}
+            className="app-focusable app-dashed hidden min-h-[46px] rounded-control text-[13.5px] font-bold lg:block"
+          >
+            Pridėti išlaidas
+          </button>
+        </div>
       </div>
-      <CategoryBreakdown transactions={expenses} year={year} month={month} onChanged={() => load(year, month)} />
 
       <TransactionFormModal
         open={addModal !== null}
