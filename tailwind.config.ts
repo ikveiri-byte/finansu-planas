@@ -28,34 +28,11 @@ const config: Config = {
         "saved-deep": "var(--saved-deep)",
         danger: "var(--danger)",
         "danger-soft": "var(--danger-soft)",
-
-        /* Laikini seni pavadinimai — kol perdarysiu likusius vaizdus */
-        appbg: "var(--paper)",
-        surface: "var(--card)",
-        "surface-strong": "var(--card)",
-        navy: {
-          950: "var(--ink)",
-          900: "var(--ink)",
-          800: "var(--ink-2)",
-        },
-        blue: {
-          700: "var(--accent-deep)",
-          600: "var(--accent-deep)",
-          500: "var(--accent-deep)",
-        },
-        cyan: { 400: "var(--accent)" },
-        muted: "var(--ink-3)",
-        muted2: "var(--ink-3)",
-        focus: "var(--accent-deep)",
       },
       borderRadius: {
         panel: "var(--radius-panel)",
         card: "var(--radius-card)",
         control: "var(--radius-control)",
-      },
-      boxShadow: {
-        card: "none",
-        fab: "none",
       },
       maxWidth: {
         app: "1440px",

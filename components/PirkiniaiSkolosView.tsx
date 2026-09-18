@@ -14,7 +14,10 @@ export default function PirkiniaiSkolosView() {
 
   const load = useCallback(async (y: number, m: number) => {
     setLoading(true);
-    const [d, p] = await Promise.all([fetchMonthDebts(y, m), fetchMonthPlannedPurchases(y, m)]);
+    const [d, p] = await Promise.all([
+      fetchMonthDebts(y, m),
+      fetchMonthPlannedPurchases(y, m),
+    ]);
     setDebts(d);
     setPurchases(p);
     setLoading(false);
@@ -24,7 +27,9 @@ export default function PirkiniaiSkolosView() {
     load(year, month);
   }, [year, month, load]);
 
-  if (loading) return <p className="text-center text-sm py-10" style={{ color: "var(--muted)" }}>Kraunama…</p>;
+  if (loading) {
+    return <p className="py-10 text-center text-sm text-ink-3">Kraunama…</p>;
+  }
 
   return (
     <DebtsAndPurchases

@@ -6,6 +6,11 @@ type CategoryIconProps = {
   size?: number;
   className?: string;
   decorative?: boolean;
+  /**
+   * Nebenaudojamas: ženklai dabar yra emoji, o jų spalvos nustatyti negalima.
+   * Paliktas tik tam, kad dar neperdaryti vaizdai susikompiliuotų.
+   */
+  color?: string;
 };
 
 /**

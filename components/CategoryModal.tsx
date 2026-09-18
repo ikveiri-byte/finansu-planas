@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, CircleAlert } from "lucide-react";
+import { CircleAlert, Plus, X } from "lucide-react";
 import type { ExpenseCategory, Transaction } from "@/lib/types";
 import { formatEur, formatShortDate } from "@/lib/format";
 import { addExpense, deleteTransaction, restoreTransaction } from "@/lib/db";
@@ -17,7 +17,17 @@ type Props = {
   onChanged: () => void;
 };
 
-export default function CategoryModal({ category, transactions, year, month, onClose, onChanged }: Props) {
+const FIELD =
+  "app-focusable min-h-[48px] rounded-control border border-line bg-sunken-2 px-3.5 text-[14px] text-ink outline-none placeholder:text-ink-3";
+
+export default function CategoryModal({
+  category,
+  transactions,
+  year,
+  month,
+  onClose,
+  onChanged,
+}: Props) {
   const { pushAction } = useUndoRedo();
   const [newName, setNewName] = useState("");
   const [newAmt, setNewAmt] = useState("");
@@ -42,7 +52,10 @@ export default function CategoryModal({ category, transactions, year, month, onC
           isFixed: false,
         }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("Užklausa užtruko per ilgai. Patikrink interneto ryšį.")), 12000)
+          setTimeout(
+            () => reject(new Error("Užklausa užtruko per ilgai. Patikrink interneto ryšį.")),
+            12000
+          )
         ),
       ]);
       pushAction({
@@ -70,62 +83,47 @@ export default function CategoryModal({ category, transactions, year, month, onC
     onChanged();
   }
 
-  const inputStyle = {
-    border: "1.5px solid var(--line)",
-    borderRadius: "var(--radius-control)",
-    padding: "10px 12px",
-    fontSize: 14,
-    outline: "none",
-    minHeight: 48,
-    color: "var(--text)",
-    background: "var(--surface-strong)",
-  } as const;
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "rgba(5, 22, 60, 0.55)" }}
+      className="fixed inset-0 z-50 flex items-end justify-center lg:items-center lg:p-6"
+      style={{ background: "rgba(43, 37, 32, 0.45)" }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[500px] overflow-y-auto bg-surface-strong"
-        style={{
-          borderRadius: "var(--radius-panel) var(--radius-panel) 0 0",
-          padding: "20px 20px calc(28px + env(safe-area-inset-bottom))",
-          maxHeight: "88vh",
-        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={category}
+        className="max-h-[88vh] w-full max-w-[500px] overflow-y-auto rounded-t-panel bg-card px-5 lg:max-w-[600px] lg:rounded-panel"
+        style={{ paddingTop: 20, paddingBottom: "calc(28px + env(safe-area-inset-bottom))" }}
       >
-        <div className="w-9 h-1 rounded-full mx-auto mb-4" style={{ background: "var(--line)" }} />
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <span
-              className="flex items-center justify-center flex-shrink-0 rounded-full"
-              style={{ width: 34, height: 34, background: "var(--line-soft)", color: "var(--blue-700)" }}
-            >
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-line lg:hidden" />
+
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="app-accent-tint flex h-9 w-9 items-center justify-center rounded-[12px]">
               <CategoryIcon category={category} size={18} />
             </span>
-            <span className="text-[18px] font-bold" style={{ color: "var(--text)" }}>{category}</span>
+            <h2 className="app-display text-[19px]">{category}</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Uždaryti"
-            className="rounded-full flex items-center justify-center app-focusable"
-            style={{ width: 34, height: 34, background: "var(--line-soft)", color: "var(--navy-900)" }}
+            className="app-focusable flex h-9 w-9 items-center justify-center rounded-[12px] bg-sunken text-ink-2"
           >
             <X size={16} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="mb-4 flex gap-2">
           <input
             placeholder="Pavadinimas"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && newAmt && handleAdd()}
-            className="flex-1 min-w-0"
-            style={inputStyle}
             aria-label="Naujo įrašo pavadinimas"
+            className={`${FIELD} min-w-0 flex-1`}
           />
           <input
             placeholder="€"
@@ -133,59 +131,75 @@ export default function CategoryModal({ category, transactions, year, month, onC
             value={newAmt}
             onChange={(e) => setNewAmt(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && newName.trim() && handleAdd()}
-            className="w-[76px] text-right app-numeric"
-            style={inputStyle}
             aria-label="Suma"
+            className={`${FIELD} app-num w-[84px] text-right`}
           />
           <button
+            type="button"
             onClick={handleAdd}
             disabled={saving}
             aria-label="Pridėti įrašą"
-            className="text-white rounded-control flex items-center justify-center disabled:opacity-50 app-focusable flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, var(--blue-700), var(--blue-500))", width: 48, height: 48 }}
+            className="app-focusable flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-control bg-ink text-card disabled:opacity-50"
           >
             <Plus size={20} strokeWidth={2.2} aria-hidden="true" />
           </button>
         </div>
 
         {error && (
-          <p className="flex items-start gap-1.5 text-sm mb-3 rounded-control px-3 py-2.5" style={{ color: "var(--danger)", background: "var(--danger-soft)" }}>
-            <CircleAlert size={16} strokeWidth={1.8} className="flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <p
+            className="mb-3 flex items-start gap-2 rounded-control px-3 py-2.5 text-[13.5px]"
+            style={{ color: "var(--danger)", background: "var(--danger-soft)" }}
+          >
+            <CircleAlert
+              size={16}
+              strokeWidth={1.9}
+              className="mt-0.5 flex-shrink-0"
+              aria-hidden="true"
+            />
             {error}
           </p>
         )}
 
-        <div className="flex justify-between items-baseline mb-3">
-          <span className="text-sm font-medium" style={{ color: "var(--muted)" }}>Iš viso</span>
-          <span className="app-numeric text-base font-bold" style={{ color: "var(--blue-700)" }}>{formatEur(total)}</span>
+        <div className="mb-3 flex items-baseline justify-between border-b border-line-soft pb-2">
+          <span className="text-[13px] font-bold text-ink-2">Iš viso</span>
+          <span className="app-num text-[18px]">{formatEur(total)}</span>
         </div>
 
-        <ul className="flex flex-col gap-2">
-          {transactions.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-control"
-              style={{ background: "var(--line-soft)" }}
-            >
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: "var(--text)" }}>{t.description}</p>
-              </div>
-              <div className="flex items-center gap-2.5 flex-shrink-0">
-                <span className="text-xs" style={{ color: "var(--muted)" }}>{formatShortDate(t.txn_date)}</span>
-                <span className="app-numeric text-sm font-bold" style={{ color: "var(--navy-800)" }}>{formatEur(t.amount)}</span>
+        {transactions.length === 0 ? (
+          <p className="py-6 text-center text-[13.5px] text-ink-3">
+            Šioje kategorijoje dar nieko nėra.
+          </p>
+        ) : (
+          <ul className="flex flex-col">
+            {transactions.map((t, i) => (
+              <li
+                key={t.id}
+                className={`flex items-center gap-3 py-2.5 ${
+                  i > 0 ? "border-t border-line-soft" : ""
+                }`}
+              >
+                <span className="w-[42px] flex-shrink-0 text-[12.5px] text-ink-3">
+                  {formatShortDate(t.txn_date)}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14.5px]">{t.description}</span>
+                {t.is_fixed && (
+                  <span className="app-accent-tint flex-shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-bold text-accent-deep">
+                    kartojasi
+                  </span>
+                )}
+                <span className="app-num text-[15px]">{formatEur(t.amount)}</span>
                 <button
+                  type="button"
                   onClick={() => handleDelete(t)}
                   aria-label={`Ištrinti ${t.description}`}
-                  className="rounded-full flex items-center justify-center app-focusable"
-                  style={{ width: 26, height: 26, background: "var(--surface-strong)", color: "var(--muted)" }}
+                  className="app-focusable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-ink-3 hover:bg-sunken"
                 >
-                  <X size={13} strokeWidth={2} aria-hidden="true" />
+                  <X size={14} strokeWidth={2} aria-hidden="true" />
                 </button>
-              </div>
-            </li>
-          ))}
-          {transactions.length === 0 && <p className="text-sm py-4" style={{ color: "var(--muted)" }}>Šią kategoriją dar tuščia.</p>}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
