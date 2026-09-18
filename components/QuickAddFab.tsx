@@ -3,39 +3,35 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { useMonth } from "@/lib/monthContext";
 import TransactionFormModal from "./TransactionFormModal";
 
 export default function QuickAddFab() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const now = new Date();
+  const { year, month } = useMonth();
 
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
         aria-label="Greitas įrašas"
-        className="fixed flex items-center justify-center app-focusable"
-        style={{
-          right: 18,
-          bottom: "max(24px, env(safe-area-inset-bottom))",
-          width: 58,
-          height: 58,
-          borderRadius: 999,
-          background: "linear-gradient(135deg, var(--blue-700), var(--blue-500))",
-          boxShadow: "var(--shadow-fab)",
-          border: "none",
-          zIndex: 30,
-        }}
+        className="app-focusable fixed right-[18px] z-30 flex h-[62px] w-[62px] items-center justify-center rounded-[22px] bg-ink text-card lg:hidden"
+        style={{ bottom: "max(24px, env(safe-area-inset-bottom))" }}
       >
-        <Plus size={30} strokeWidth={2} color="#ffffff" aria-hidden="true" />
+        <Plus size={26} strokeWidth={2.2} aria-hidden="true" />
       </button>
+
       <TransactionFormModal
         open={open}
         onClose={() => setOpen(false)}
-        year={now.getFullYear()}
-        month={now.getMonth() + 1}
-        onSaved={() => router.refresh()}
+        year={year}
+        month={month}
+        onSaved={() => {
+          window.dispatchEvent(new CustomEvent("finansai:changed"));
+          router.refresh();
+        }}
       />
     </>
   );

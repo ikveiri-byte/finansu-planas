@@ -1,52 +1,32 @@
-import {
-  Bus,
-  House,
-  Shapes,
-  Shirt,
-  ShoppingBasket,
-  Smartphone,
-  Ticket,
-  Utensils,
-  type LucideIcon,
-} from "lucide-react";
 import type { ExpenseCategory } from "@/lib/types";
-
-const CATEGORY_ICONS: Record<ExpenseCategory, LucideIcon> = {
-  Maistas: ShoppingBasket,
-  Takeout: Utensils,
-  Nuoma: House,
-  Transportas: Bus,
-  "Telefonas, mini mokesčiai": Smartphone,
-  Pramogos: Ticket,
-  Šmutkės: Shirt,
-  Kita: Shapes,
-};
+import { CAT_ICON } from "@/lib/categoryIcons";
 
 type CategoryIconProps = {
   category: ExpenseCategory;
   size?: number;
   className?: string;
-  color?: string;
   decorative?: boolean;
 };
 
+/**
+ * Kategorijų ženklai — emoji, ne linijinės ikonos.
+ * Sąrašas gyvena lib/categoryIcons.ts.
+ */
 export default function CategoryIcon({
   category,
-  size = 22,
+  size = 18,
   className = "",
-  color,
   decorative = true,
 }: CategoryIconProps) {
-  const Icon = CATEGORY_ICONS[category] ?? Shapes;
-
   return (
-    <Icon
-      size={size}
-      strokeWidth={1.8}
+    <span
       className={className}
-      color={color}
+      style={{ fontSize: size, lineHeight: 1 }}
       aria-hidden={decorative ? "true" : undefined}
-    />
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : category}
+    >
+      {CAT_ICON[category] ?? "💡"}
+    </span>
   );
 }
-

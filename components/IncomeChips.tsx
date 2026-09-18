@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleDollarSign, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 import { formatEur } from "@/lib/format";
 import { deleteTransaction, restoreTransaction } from "@/lib/db";
@@ -9,11 +9,11 @@ import { useUndoRedo } from "@/lib/undoRedo";
 type Props = {
   income: Transaction[];
   onChanged: () => void;
+  onAdd?: () => void;
 };
 
-export default function IncomeChips({ income, onChanged }: Props) {
+export default function IncomeChips({ income, onChanged, onAdd }: Props) {
   const { pushAction } = useUndoRedo();
-  if (income.length === 0) return null;
   const total = income.reduce((s, t) => s + t.amount, 0);
 
   async function handleDelete(t: Transaction) {
@@ -27,40 +27,52 @@ export default function IncomeChips({ income, onChanged }: Props) {
   }
 
   return (
-    <div className="app-surface rounded-card px-4 py-3.5 mb-4">
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-1.5" style={{ color: "var(--text)" }}>
-          <CircleDollarSign size={16} strokeWidth={1.8} aria-hidden="true" />
-          <span className="text-xs font-bold">Pajamų šaltiniai</span>
+    <div className="app-card rounded-card px-5 py-[18px]">
+      <div className="mb-3 flex items-baseline gap-2">
+        <h2 className="app-display text-[17px]">Iš kur atėjo</h2>
+        <div className="flex-1" />
+        <span className="app-num text-[17px]">{formatEur(total)}</span>
+      </div>
+
+      {income.length === 0 ? (
+        <p className="text-[13.5px] leading-relaxed text-ink-3">
+          Šį mėnesį pajamų dar neįrašei.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {income.map((t) => (
+            <div key={t.id} className="flex items-center gap-3">
+              <span
+                className="block h-[30px] w-[9px] flex-shrink-0 rounded-full"
+                style={{ background: "var(--saved)" }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1 truncate text-[14.5px] font-medium capitalize">
+                {t.description}
+              </span>
+              <span className="app-num text-[15.5px]">{formatEur(t.amount)}</span>
+              <button
+                type="button"
+                onClick={() => handleDelete(t)}
+                aria-label={`Ištrinti pajamą ${t.description}`}
+                className="app-focusable flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] text-ink-3 hover:bg-sunken"
+              >
+                <X size={15} strokeWidth={2} aria-hidden="true" />
+              </button>
+            </div>
+          ))}
         </div>
-        <span className="app-numeric text-xs font-bold" style={{ color: "var(--blue-700)" }}>
-          {formatEur(total)}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {income.map((t) => (
-          <div
-            key={t.id}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5"
-            style={{ background: "var(--line-soft)" }}
-          >
-            <span className="text-xs font-medium capitalize" style={{ color: "var(--text)" }}>
-              {t.description}
-            </span>
-            <span className="app-numeric text-xs font-bold" style={{ color: "var(--navy-800)" }}>
-              {formatEur(t.amount)}
-            </span>
-            <button
-              onClick={() => handleDelete(t)}
-              aria-label={`Ištrinti pajamą ${t.description}`}
-              className="flex items-center justify-center app-focusable"
-              style={{ width: 20, height: 20, borderRadius: 999, color: "var(--muted)" }}
-            >
-              <X size={13} strokeWidth={2} aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-      </div>
+      )}
+
+      {onAdd && (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="app-focusable app-dashed mt-3.5 min-h-[42px] w-full rounded-[13px] text-[13.5px] font-bold"
+        >
+          Pridėti pajamas
+        </button>
+      )}
     </div>
   );
 }
